@@ -1,3 +1,4 @@
+# Backend
 # Atendente Virtual Shineray
 
 Backend de um chatbot de atendimento via WhatsApp para uma concessionária de motos. O bot qualifica leads coletando informações do cliente (modelo de interesse, cidade, forma de pagamento, etc.) e transfere automaticamente para um vendedor quando o score atinge 70 pontos.
