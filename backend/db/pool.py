@@ -1,5 +1,5 @@
 from psycopg_pool import AsyncConnectionPool
-from trabalho_final_poo.backend.config import settings
+from config import settings
 
 
 pool = AsyncConnectionPool(
