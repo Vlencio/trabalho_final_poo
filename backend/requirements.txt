@@ -1,0 +1,4 @@
+fastapi
+anthropic
+psycopg[pool]
+pydantic-settings
