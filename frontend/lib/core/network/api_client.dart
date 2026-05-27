@@ -18,9 +18,12 @@ class ApiClient {
     return 'http://localhost:8000';
   }
 
+  final http.Client _httpClient;
   String _baseUrl;
 
-  ApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? defaultBaseUrl;
+  ApiClient({String? baseUrl, http.Client? httpClient})
+      : _baseUrl = baseUrl ?? defaultBaseUrl,
+        _httpClient = httpClient ?? http.Client();
 
   String get baseUrl => _baseUrl;
 
@@ -40,7 +43,7 @@ class ApiClient {
     developer.log('GET Request: $uri', name: 'ApiClient');
 
     try {
-      final response = await http.get(uri, headers: _headers);
+      final response = await _httpClient.get(uri, headers: _headers);
       return _processResponse(response);
     } catch (e) {
       developer.log('GET Error: $e', name: 'ApiClient', error: e);
@@ -53,7 +56,7 @@ class ApiClient {
     developer.log('POST Request: $uri | Body: $body', name: 'ApiClient');
 
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         uri,
         headers: _headers,
         body: jsonEncode(body),
@@ -89,6 +92,10 @@ class ApiClient {
       );
       throw ApiException(errorMessage, statusCode);
     }
+  }
+
+  void close() {
+    _httpClient.close();
   }
 }
 

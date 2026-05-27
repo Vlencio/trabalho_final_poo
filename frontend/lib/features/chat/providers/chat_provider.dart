@@ -1,26 +1,29 @@
 import 'package:flutter/material.dart';
-import '../../../core/network/api_client.dart';
 import '../models/message.dart';
+import '../services/chat_api_service.dart';
 
 class ChatProvider extends ChangeNotifier {
-  final ApiClient _apiClient = ApiClient();
+  final ChatApi _chatApi;
   final List<Message> _messages = [];
   bool _isLoading = false;
   String? _errorMessage;
-  bool _useMockMode = true; // Defaults to mock mode for easy testing out-of-the-box
+  bool _useMockMode;
 
   List<Message> get messages => List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get useMockMode => _useMockMode;
-  String get baseUrl => _apiClient.baseUrl;
+  String get baseUrl => _chatApi.baseUrl;
 
-  ChatProvider() {
-    // Add an initial greeting message from the AI assistant
+  ChatProvider({
+    ChatApi? chatApi,
+    bool useMockMode = false,
+  })  : _chatApi = chatApi ?? ChatApiService(),
+        _useMockMode = useMockMode {
     _messages.add(
       Message(
         id: 'initial_greet',
-        content: 'Olá! Sou seu assistente inteligente. Como posso ajudar você hoje?',
+        content: 'Olá! Sou a Maria, atendente virtual da Shineray. Como posso ajudar você hoje?',
         isUser: false,
         timestamp: DateTime.now(),
       ),
@@ -33,7 +36,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void updateBaseUrl(String newUrl) {
-    _apiClient.baseUrl = newUrl;
+    _chatApi.baseUrl = newUrl;
     notifyListeners();
   }
 
@@ -58,14 +61,14 @@ class ChatProvider extends ChangeNotifier {
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    final userMessage = Message(
+    final optimisticUserMessage = Message(
       id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
       content: text.trim(),
       isUser: true,
       timestamp: DateTime.now(),
     );
 
-    _messages.add(userMessage);
+    _messages.add(optimisticUserMessage);
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -93,24 +96,12 @@ class ChatProvider extends ChangeNotifier {
         );
         _messages.add(aiMessage);
       } else {
-        // Send request to real backend FastAPI
-        // Endpoint structure matches common chatbot endpoints
-        final response = await _apiClient.post('/chat', {
-          'message': text,
-        });
-
-        if (response != null && response is Map<String, dynamic>) {
-          final replyText = response['response'] ?? response['reply'] ?? 'Sem resposta do servidor.';
-          final aiMessage = Message(
-            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-            content: replyText.toString(),
-            isUser: false,
-            timestamp: DateTime.now(),
-          );
-          _messages.add(aiMessage);
-        } else {
-          throw ApiException('Formato de resposta inválido recebido do backend.');
+        final exchange = await _chatApi.sendMessage(text.trim());
+        final index = _messages.indexWhere((m) => m.id == optimisticUserMessage.id);
+        if (index >= 0) {
+          _messages[index] = exchange.userMessage;
         }
+        _messages.add(exchange.botMessage);
       }
     } catch (e) {
       _errorMessage = e.toString();

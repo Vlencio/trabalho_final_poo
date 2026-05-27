@@ -12,12 +12,17 @@ class Message {
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final role = json['role'] as String?;
+    final isUserValue = json['is_user'];
+    final rawTimestamp = json['created_at'] ?? json['timestamp'];
+
     return Message(
-      id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: rawId?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
       content: json['content'] as String? ?? '',
-      isUser: json['is_user'] as bool? ?? false,
-      timestamp: json['timestamp'] != null 
-          ? DateTime.parse(json['timestamp'] as String) 
+      isUser: isUserValue is bool ? isUserValue : role == 'user',
+      timestamp: rawTimestamp != null
+          ? DateTime.parse(rawTimestamp as String)
           : DateTime.now(),
     );
   }

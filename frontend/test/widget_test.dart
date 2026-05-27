@@ -13,7 +13,7 @@ void main() {
 
     // Verify that the initial welcome greeting is present
     expect(
-      find.text('Olá! Sou seu assistente inteligente. Como posso ajudar você hoje?'),
+      find.text('Olá! Sou a Maria, atendente virtual da Shineray. Como posso ajudar você hoje?'),
       findsOneWidget
     );
 
